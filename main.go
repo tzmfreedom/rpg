@@ -15,10 +15,29 @@ var speed int
 var moving bool
 var worldMap [][]*Block
 var message string
+var phase int
 
 type Block struct {
 	Access bool
 	Event bool
+}
+
+const (
+	PHASE_FIELD = iota
+	PHASE_MENU
+	PHASE_BATTLE
+)
+
+var phaseHandleFunctions = []func(){
+	fieldHandleInput,
+	menuHandleInput,
+	battleHandleInput,
+}
+
+var phaseDrawFunctions = []func(*ebiten.Image){
+	fieldDraw,
+	menuDraw,
+	battleDraw,
 }
 
 func main() {
@@ -28,17 +47,19 @@ func main() {
 }
 
 func update(screen *ebiten.Image) error {
-	handleInput(screen)
+	phaseHandleFunctions[phase]()
 	ebitenutil.DebugPrint(screen, message)
-	// ebitenutil.DebugPrint(screen, strconv.Itoa(score))
 	if ebiten.IsDrawingSkipped() {
 		return nil
 	}
-	draw(screen)
+	phaseDrawFunctions[phase](screen)
+	if x + y == 10 {
+		phase = PHASE_BATTLE
+	}
 	return nil
 }
 
-func handleInput(screen *ebiten.Image) {
+func fieldHandleInput() {
 	if v := inpututil.KeyPressDuration(ebiten.KeyLeft); v == 1 || (v > 0 && v%speed == 0) {
 		if x > 0 {
 			if block := worldMap[y][x-1]; block != nil && block.Access {
@@ -67,6 +88,9 @@ func handleInput(screen *ebiten.Image) {
 			}
 		}
 	}
+	if v := inpututil.KeyPressDuration(ebiten.KeyW); v == 1 {
+		phase = PHASE_MENU
+	}
 	if v := inpututil.KeyPressDuration(ebiten.KeyS); v == 1 {
 		if block := worldMap[y][x]; block != nil && block.Event {
 			message = "hogehoge!"
@@ -74,7 +98,7 @@ func handleInput(screen *ebiten.Image) {
 	}
 }
 
-func draw(screen *ebiten.Image) {
+func fieldDraw(screen *ebiten.Image) {
 	img, _ := ebiten.NewImage(size, size, 0)
 	img.Fill(color.RGBA{0x00, 0xff, 0x00, 0xff})
 	options := &ebiten.DrawImageOptions{}
@@ -119,6 +143,7 @@ func init() {
 			}
 		}
 	}
+	phase = PHASE_FIELD
 	worldMap[5][10] = &Block{
 		Access: false,
 		Event: false,
