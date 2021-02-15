@@ -1,31 +1,21 @@
 package main
 
 import (
-	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/ebitenutil"
-	"github.com/hajimehoshi/ebiten/inpututil"
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 var battleCursor int
 
 func battleHandleInput() {
-	if v := inpututil.KeyPressDuration(ebiten.KeyDown); v == 1 || (v > 0 && v%speed == 0) {
-		if y < ymax {
-			if block := worldMap[y+1][x]; block != nil && block.Access {
-				y++
-			}
-		}
+	if v := inpututil.KeyPressDuration(ebiten.KeyDown); v > 0 {
 	}
-	if v := inpututil.KeyPressDuration(ebiten.KeyUp); v == 1 || (v > 0 && v%speed == 0) {
-		if y > 0 {
-			if block := worldMap[y-1][x]; block != nil && block.Access {
-				y--
-			}
-		}
+	if v := inpututil.KeyPressDuration(ebiten.KeyUp); v > 0 {
 	}
-	if v := inpututil.KeyPressDuration(ebiten.KeyS); v == 1 {
-		x++
-		phase = PHASE_FIELD
+	if v := inpututil.KeyPressDuration(ebiten.KeyS); v > 0 {
+		player.x++
+		phase = PhaseField
 	}
 }
 

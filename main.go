@@ -1,29 +1,28 @@
 package main
 
 import (
-	"github.com/hajimehoshi/ebiten"
-	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"log"
+
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
-var x, y, xmax, ymax int
 var screenWidth, screenHeight int
 var size int
-var speed int
-var moving bool
-var worldMap [][]*Block
+var player *Player
+var worldMap *WorldMap
 var message string
 var phase int
 
 type Block struct {
 	Access bool
-	Event bool
+	Event  bool
 }
 
 const (
-	PHASE_FIELD = iota
-	PHASE_MENU
-	PHASE_BATTLE
+	PhaseField = iota
+	PhaseMenu
+	PhaseBattle
 )
 
 var phaseHandleFunctions = []func(){
@@ -39,49 +38,38 @@ var phaseDrawFunctions = []func(*ebiten.Image){
 }
 
 func main() {
-	if err := ebiten.Run(update, screenWidth, screenHeight, 1, "RPG"); err != nil {
+	ebiten.SetWindowSize(640, 480)
+	ebiten.SetWindowTitle("RPG")
+	if err := ebiten.RunGame(&Game{}); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func update(screen *ebiten.Image) error {
-	phaseHandleFunctions[phase]()
-	ebitenutil.DebugPrint(screen, message)
-	if ebiten.IsDrawingSkipped() {
-		return nil
-	}
-	phaseDrawFunctions[phase](screen)
-	if x + y == 10 {
-		phase = PHASE_BATTLE
-	}
+type Game struct{}
+
+func (g *Game) Update() error {
 	return nil
 }
 
+func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
+	return screenWidth, screenHeight
+}
+
+func (g *Game) Draw(screen *ebiten.Image) {
+	phaseHandleFunctions[phase]()
+	ebitenutil.DebugPrint(screen, message)
+	phaseDrawFunctions[phase](screen)
+	if player.x + player.y == 10 {
+		phase = PhaseBattle
+	}
+}
 
 func init() {
 	screenWidth = 640
 	screenHeight = 480
 	size = 32
-	xmax = screenWidth / size
-	ymax = screenHeight / size
-	speed = 12
-	worldMap = make([][]*Block, ymax)
-	for i, _ := range worldMap {
-		worldMap[i] = make([]*Block, xmax)
-		for j, _ := range worldMap[i] {
-			worldMap[i][j] = &Block{
-				Access: true,
-				Event: false,
-			}
-		}
-	}
-	phase = PHASE_FIELD
-	worldMap[5][10] = &Block{
-		Access: false,
-		Event: false,
-	}
-	worldMap[10][10] = &Block{
-		Access: true,
-		Event: true,
-	}
+	phase = PhaseField
+
+	player = NewPlayer(0, 0, 12)
+	worldMap = NewWorldMap(screenWidth / size, screenHeight / size)
 }
